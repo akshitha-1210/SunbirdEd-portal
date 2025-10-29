@@ -236,22 +236,36 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
         const enrolledSection$ = this.getQueryParams().pipe(
             tap(() => {
                 const currentPage = this._currentPageData = this.getCurrentPageData();
+                console.log('Current Page Data on Query Params Change', currentPage);
                 this.pageTitleSrc = get(this.resourceService, 'RESOURCE_CONSUMPTION_ROOT') + get(currentPage, 'title');
                 this.isFilterEnabled = true;
                 if (_.get(currentPage, 'filter')) {
                     this.isFilterEnabled = _.get(currentPage, 'filter.isEnabled');
+                   
                 }
                 if ((_.get(currentPage, 'filter') && !_.get(currentPage, 'filter.isEnabled'))) {
                     this.fetchContents$.next(currentPage);
                 }
+               
                 this.setFilterConfig(currentPage);
             }),
-            switchMap(this.fetchEnrolledCoursesSection.bind(this))
+            switchMap(this.fetchEnrolledCoursesSection.bind(this)),
+            tap((formattedContent) => {
+                // console.log('Formatted Data from fetchContents:', formattedContent);
+                this.pageSections = formattedContent.slice(0, 4);
+                console.log("Final", this.enrolledSection);
+
+                return this.enrolledSection;
+            }),
+           
         );
 
         this.subscription$ = merge(concat(this.fetchChannelData(), enrolledSection$), this.initLayout(), this.fetchContents())
             .pipe(
                 takeUntil(this.unsubscribe$),
+                tap((data)=>{
+                    console.log('Subscription Data:', data);
+                }),
                 catchError((err: any) => {
                     console.error(err);
                     return of({});
@@ -267,6 +281,8 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
     public fetchEnrolledCoursesSection() {
         return this.coursesService.enrolledCourseData$
             .pipe(
+                tap((response) => {
+                    console.log('Raw Enrolled Courses API Response:', response); }),
                 tap(({ enrolledCourses, err }) => {
                     this.enrolledCourses = this.enrolledSection = [];
                     this.completeCourses = this.completedCourseSection = [];                   
@@ -306,7 +322,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     let filteredCourses = _.filter(enrolledCourses || [], enrolledContentPredicate);
                     filteredCourses = _.orderBy(filteredCourses, [sortingField], [sortingOrder]);
                     this.enrolledCourses = filteredCourses
-                    
+                    console.log('Filtered Enrolled Courses:', this.enrolledCourses);
                     const { constantData, metaData, dynamicFields } = _.get(this.configService, 'appConfig.CoursePageSection.enrolledCourses');
                     
                 
@@ -328,6 +344,8 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         
                         return formatedContent;
                     }));
+               
+                   
                     
                     this.allEnrolledCourses = filteredCourses;
                  
@@ -354,7 +372,77 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     completedCourseSection.name = this.resourceService.frmelmnts.lbl.completedCourses || "Completed courses";
                     this.enrolledSection = enrolledSection;
                     this.completedCourseSection = completedCourseSection;
-                })
+
+                    console.log('Enrolled Section:', this.enrolledSection);
+                    console.log('Completed Course Section:', this.completedCourseSection);
+                }),
+                switchMap(()=>this.fetchContents()),
+                tap((pageContentData) => {
+                    console.log('Fetched Contents for Formatting:', pageContentData);
+                    const enrolledSection = { contents: [] };
+
+                    const allContents = _.flatMap(pageContentData, section => section.contents || []);
+                    console.log('All Fetched Contents:', allContents);
+                    console.log("First item identifer:", allContents[0]?.identifier);
+                    // Create a lookup map for quick access
+                    const metadataMap = _.keyBy(allContents, 'identifier');
+                    console.log('Metadata Map:', metadataMap);
+
+                    // const metadataMap = {};
+                    // allContents.forEach(item => {
+                    //     if (item.identifier) {
+                    //         metadataMap[item.identifier] = item;
+                    //     }
+                    // });
+                    // console.log('Metadata Map:', metadataMap);
+
+
+                    // Enrich enrolled section contents with board/grade info
+                    enrolledSection.contents = this.enrolledSection.contents.map(content => {
+
+
+                        console.log('Full content object:', content);
+                        console.log('content.metaData:', content.metaData);
+              
+
+                        const courseId = _.get(content, 'metaData.courseId') || _.get(content, 'identifier') ||  _.get(content, 'metaData.identifier');
+                        const metadata = metadataMap[courseId];
+
+                        console.log('Matching courseId:', courseId, 'Found metadata:', metadata);
+                        
+                        if (metadata) {
+                            content.board = _.get(metadata, 'se_boards[0]', '');
+                            content.gradeLevel = _.get(metadata, 'se_gradeLevels[0]', '');
+                            content.medium = _.get(metadata, 'se_mediums[0]', '');
+                        }
+                        // console.log('Enriched Content:', content);
+                    
+                        return content;
+
+                         });
+
+                    const newBgmsOnly = allContents.filter(item => {
+                    const courseId = item.identifier;
+                    return !this.enrolledSection.contents.some(
+                    enrolled => _.get(enrolled, 'metaData.courseId') === courseId
+                        );
+                    });
+                        
+                    this.pageSections = pageContentData.slice(0, 4);
+
+                    enrolledSection.contents = [
+                            ...this.enrolledSection.contents,
+                            ...newBgmsOnly
+                        ];
+                    // enrolledSection.count = enrolledSection.contents.length;
+                    // this.enrolledSection= enrolledSection;
+                    console.log('Final Enrolled Section with Metadata:', enrolledSection);
+                    // console.log("Enrolled Section final", enrolledSection);
+                                    
+                }),
+              
+              
+
             );
     }
 
@@ -514,15 +602,22 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (this.userService.loggedIn) {
                             option.filters['visibility'] = option.filters['channel'] = [];
                         }
+             
+                      
+                        console.log('Current Page Data', currentPageData);
+                        console.log('params', params);
+                       
                         return this.searchService.contentSearch(option)
-                            .pipe(
+                            .pipe( 
                                 map((response) => {
                                     const { subject: selectedSubjects = [] } = (this.selectedFilters || {}) as { subject: [] };
                                     this._facets$.next(request.facets ?
                                         this.utilService.processCourseFacetData(_.get(response, 'result'), _.get(request, 'facets')) : {});
                                     this.searchResponse = get(response, 'result.content');
+                                   
                                     if (_.has(response, 'result.QuestionSet')) {
                                         this.searchResponse = _.merge(this.searchResponse, _.get(response, 'result.QuestionSet'));
+                                        
                                     }
                                     const globalFilterCategoriesObject = this.cslFrameworkService.getGlobalFilterCategoriesObject();
                                     const lastCategory = this.frameworkCategoriesList[this.frameworkCategoriesList.length - 1];
@@ -561,6 +656,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                             sections.push({
                                                 name: section,
                                                 contents: filteredContents[section]
+                                               
                                             });
                                         }
                                     }
@@ -607,6 +703,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                             }
                                         });
                                         this.facetSections = _.sortBy(this.facetSections, ['index']);
+                                     
                                         this.facetSections = this.facetSections.filter(section => section.data && section.data.length > 0);
                                         if (facetKeys.indexOf('search') > -1) {
                                             this.contentSections = [];
@@ -626,17 +723,19 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                 }), tap(data => {
                                     // this.userPreference = this.setUserPreferences();
                                     this.showLoader = false;              
-                                    const userProfileSubjects = _.get(this.userService,  `userProfile.framework.${this.frameworkCategoriesList[3]}`) || [];
+                                    const userProfileSubjects = _.get(this.userService,`userProfile.framework.${this.frameworkCategoriesList[3]}`) || [];
                                     const [userSubjects, notUserSubjects] = partition(sortBy(data, ['name']), value => {
                                         const { name = null } = value || {};
                                         if (!name) { return false; }
                                         return find(userProfileSubjects, subject => toLower(subject) === toLower(name));
                                     });
                                     this.apiContentList = [...userSubjects, ...notUserSubjects];
+                                    console.log('API content list', this.apiContentList);
                                     if (this.apiContentList !== undefined && !this.apiContentList.length) {
                                         return;
                                     }
                                     this.pageSections = this.apiContentList.slice(0, 4);
+                                    console.log('Page Sections', this.pageSections);
                                     this.addHoverData();
                                 }, err => {
                                     this.showLoader = false;

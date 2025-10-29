@@ -16,73 +16,73 @@
     "module": "es2020",    
     "paths": {
       "@sunbird/core": [
-        "app/modules/core"
+        "src/app/modules/core"
       ],
       "@sunbird/shared": [
-        "app/modules/shared"
+        "src/app/modules/shared"
       ],
       "@sunbird/home": [
-        "app/modules/home"
+        "src/app/modules/home"
       ],
       "@sunbird/dashboard": [
-        "app/modules/dashboard"
+        "src/app/modules/dashboard"
       ],
       "@sunbird/admin": [
-        "app/modules/admin"
+        "src/app/modules/admin"
       ],
       "@sunbird/resource": [
-        "app/modules/resource"
+        "src/app/modules/resource"
       ],
       "@sunbird/learn": [
-        "app/modules/learn"
+        "src/app/modules/learn"
       ],
       "@sunbird/workspace": [
-        "app/modules/workspace"
+        "src/app/modules/workspace"
       ],
       "@sunbird/org-management": [
-        "app/modules/org-management"
+        "src/app/modules/org-management"
       ],
       "@sunbird/public": [
-        "app/modules/public"
+        "src/app/modules/public"
       ],
       "@sunbird/profile": [
-        "app/plugins/profile"
+        "src/app/plugins/profile"
       ],
       "@sunbird/search": [
-        "app/modules/search"
+        "src/app/modules/search"
       ],
       "@sunbird/telemetry": [
-        "app/modules/telemetry"
+        "src/app/modules/telemetry"
       ],
       "@sunbird/badge": [
-        "app/modules/badging"
+        "src/app/modules/badging"
       ],
       "@sunbird/shared-feature": [
-        "app/modules/shared-feature"
+        "src/app/modules/shared-feature"
       ],
       "@sunbird/environment": [
-        "environments/environment"
+        "src/environments/environment"
       ],
       "@sunbird/course-batch": [
-        "app/modules/course-batch"
+        "src/app/modules/course-batch"
       ],
       "@sunbird/player-helper": [
-        "app/modules/player-helper"
+        "src/app/modules/player-helper"
       ],
       "@sunbird/content-search": [
-        "app/modules/content-search"
+        "src/app/modules/content-search"
       ],
       "CsLibInitializer": [
-        "app/service/CsLibInitializer/cs-lib-initializer.service.ts"
+        "src/app/service/CsLibInitializer/cs-lib-initializer.service.ts"
       ],
       "LazzyLoadScriptService": [
-        "app/service/LazzyLoadScript/lazzy-load-script.service.ts"
+        "src/app/service/LazzyLoadScript/lazzy-load-script.service.ts"
       ],
       "@sunbird/test-util": [
-        "app/testUtil/"
+        "src/app/testUtil/"
       ],
       "@sunbird/groups": [
-        "app/modules/groups"
+        "src/app/modules/groups"
       ],
       "lodash-es": [
         "../node_modules/lodash/"

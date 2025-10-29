@@ -278,6 +278,9 @@ export class SearchService {
     if (requestParam['pageNumber'] && requestParam['limit']) {
       option.data.request['offset'] = (requestParam.pageNumber - 1) * requestParam.limit;
     }
+    const response$ = this.publicDataService.post(option);
+    response$.subscribe(res => console.log('📥 Content Search Response:', res));
+
     return this.publicDataService.post(option);
   }
   /* *
