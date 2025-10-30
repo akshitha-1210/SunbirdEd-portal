@@ -250,13 +250,115 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.setFilterConfig(currentPage);
             }),
             switchMap(this.fetchEnrolledCoursesSection.bind(this)),
-            tap((formattedContent) => {
-                // console.log('Formatted Data from fetchContents:', formattedContent);
-                this.pageSections = formattedContent.slice(0, 4);
-                console.log("Final", this.enrolledSection);
+    
+            switchMap((enrolledSection:any) =>
+               
+                    this.fetchContents().pipe(
+                    map((pageContentData: any[]) => {
+                        console.log('Fetched BGMS Data:', pageContentData);
 
-                return this.enrolledSection;
-            }),
+                        // Flatten all content sections
+                        const allContents = _.flatMap(pageContentData, section => section.contents || []);
+                        const metadataMap = _.keyBy(allContents, 'identifier');
+                        console.log('Metadata Map:', metadataMap);
+
+                        // Merge metadata with enrolledSection contents
+                        const enrichedContents = (this.enrolledSection.contents || []).map(content => {
+                        const courseId = _.get(content, 'metaData.courseId') ||
+                                        _.get(content, 'identifier') ||
+                                        _.get(content, 'metaData.identifier');
+                        const metadata = metadataMap[courseId];
+
+                        if (metadata) {
+                            content.board = _.get(metadata, 'se_boards', []);
+                            content.gradeLevel = _.get(metadata, 'se_gradeLevels', []);
+                            content.medium = _.get(metadata, 'se_mediums', []);
+                            content.subject = _.get(metadata, 'se_subjects', []);
+                        }
+
+                        return content;
+                        });
+
+                        const sectionData = {
+                            ...enrolledSection,
+                            contents: enrichedContents,
+                            count: enrichedContents.length
+                        };
+                        // Preserve the original section name if it exists
+                        if (!sectionData.name) {
+                            sectionData.name = this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
+                        }
+                        return sectionData;
+                    
+                    
+                }),
+            )
+        ),
+        
+            
+            tap((finalSection) => {
+                if (!finalSection) return;
+
+                console.log("Final Section:", finalSection);
+
+                // Ensure we always work with an array (some functions might return a single section object)
+                const sections = Array.isArray(finalSection) ? finalSection : [finalSection];
+
+                const currentTab = _.get(this.activatedRoute, 'snapshot.queryParams.selectedTab');
+                const expectedSectionName =
+                    this.getSectionName(currentTab) ||
+                    sections[0]?.name ||
+                    this.resourceService.frmelmnts?.lbl?.mytrainings ||
+                    '';
+
+                // Find the enrolled section by matching the derived name
+                const enrolledSection = sections.find(s => s.name === expectedSectionName);
+
+                // Set enrolled section if found
+                if (enrolledSection) {
+                    this.enrolledSection = enrolledSection;
+                } else {
+                    console.warn(`No enrolled section found for name: ${expectedSectionName}`);
+                    this.enrolledSection = null;
+                }
+
+                console.log('Final enrolled section:', this.enrolledSection);
+
+
+            
+
+                
+                
+                // const sectionName = finalSection.name || this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
+                // const sectionName = finalSection.name;
+             
+
+                // if (this.pageSections?.length) {
+                //     const existingIndex = this.pageSections.findIndex(section => section.name === sectionName);
+                //     if (existingIndex !== -1) {
+                //         // Update existing section
+                //         this.pageSections[existingIndex] = finalSection;
+                //     } else {
+                //         // Add new section at the beginning
+                //         this.pageSections.unshift(finalSection);
+                //     }
+                // } else {
+                //     // First load
+                //     this.pageSections = [finalSection];
+                // }
+
+                // // Keep a reference to enrolled section with the correct name
+                // this.enrolledSection = finalSection;
+
+                // // Keep a reference to enrolled section
+                // this.enrolledSection = finalSection;
+
+                // console.log(' Final merged sections:', this.enrolledSection);
+                // this.enrolledSection = finalSection;
+                // this.pageSections = finalSection.contents.slice(0, 4);
+            })
+
+                        
            
         );
 
@@ -376,73 +478,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     console.log('Enrolled Section:', this.enrolledSection);
                     console.log('Completed Course Section:', this.completedCourseSection);
                 }),
-                switchMap(()=>this.fetchContents()),
-                tap((pageContentData) => {
-                    console.log('Fetched Contents for Formatting:', pageContentData);
-                    const enrolledSection = { contents: [] };
-
-                    const allContents = _.flatMap(pageContentData, section => section.contents || []);
-                    console.log('All Fetched Contents:', allContents);
-                    console.log("First item identifer:", allContents[0]?.identifier);
-                    // Create a lookup map for quick access
-                    const metadataMap = _.keyBy(allContents, 'identifier');
-                    console.log('Metadata Map:', metadataMap);
-
-                    // const metadataMap = {};
-                    // allContents.forEach(item => {
-                    //     if (item.identifier) {
-                    //         metadataMap[item.identifier] = item;
-                    //     }
-                    // });
-                    // console.log('Metadata Map:', metadataMap);
-
-
-                    // Enrich enrolled section contents with board/grade info
-                    enrolledSection.contents = this.enrolledSection.contents.map(content => {
-
-
-                        console.log('Full content object:', content);
-                        console.log('content.metaData:', content.metaData);
-              
-
-                        const courseId = _.get(content, 'metaData.courseId') || _.get(content, 'identifier') ||  _.get(content, 'metaData.identifier');
-                        const metadata = metadataMap[courseId];
-
-                        console.log('Matching courseId:', courseId, 'Found metadata:', metadata);
-                        
-                        if (metadata) {
-                            content.board = _.get(metadata, 'se_boards[0]', '');
-                            content.gradeLevel = _.get(metadata, 'se_gradeLevels[0]', '');
-                            content.medium = _.get(metadata, 'se_mediums[0]', '');
-                        }
-                        // console.log('Enriched Content:', content);
-                    
-                        return content;
-
-                         });
-
-                    const newBgmsOnly = allContents.filter(item => {
-                    const courseId = item.identifier;
-                    return !this.enrolledSection.contents.some(
-                    enrolled => _.get(enrolled, 'metaData.courseId') === courseId
-                        );
-                    });
-                        
-                    this.pageSections = pageContentData.slice(0, 4);
-
-                    enrolledSection.contents = [
-                            ...this.enrolledSection.contents,
-                            ...newBgmsOnly
-                        ];
-                    // enrolledSection.count = enrolledSection.contents.length;
-                    // this.enrolledSection= enrolledSection;
-                    console.log('Final Enrolled Section with Metadata:', enrolledSection);
-                    // console.log("Enrolled Section final", enrolledSection);
-                                    
-                }),
-              
-              
-
+                
             );
     }
 
