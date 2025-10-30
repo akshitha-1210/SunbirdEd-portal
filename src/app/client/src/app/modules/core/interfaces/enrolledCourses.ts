@@ -51,5 +51,5 @@ export interface ICourses {
     action?: IAction;
 
     batch?: any;
-    contents: any[];
+
 }
