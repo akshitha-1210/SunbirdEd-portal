@@ -255,14 +255,10 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                
                     this.fetchContents().pipe(
                     map((pageContentData: any[]) => {
-                        console.log('Fetched BGMS Data:', pageContentData);
-
-                        // Flatten all content sections
+                        
                         const allContents = _.flatMap(pageContentData, section => section.contents || []);
                         const metadataMap = _.keyBy(allContents, 'identifier');
-                        console.log('Metadata Map:', metadataMap);
-
-                        // Merge metadata with enrolledSection contents
+                        
                         const enrichedContents = (this.enrolledSection.contents || []).map(content => {
                         const courseId = _.get(content, 'metaData.courseId') ||
                                         _.get(content, 'identifier') ||
@@ -284,7 +280,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                             contents: enrichedContents,
                             count: enrichedContents.length
                         };
-                        // Preserve the original section name if it exists
+                        
                         if (!sectionData.name) {
                             sectionData.name = this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
                         }
@@ -294,14 +290,9 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                 }),
             )
         ),
-        
-            
+         
             tap((finalSection) => {
-                if (!finalSection) return;
-
-                console.log("Final Section:", finalSection);
-
-                // Ensure we always work with an array (some functions might return a single section object)
+                if (!finalSection) return;            
                 const sections = Array.isArray(finalSection) ? finalSection : [finalSection];
 
                 const currentTab = _.get(this.activatedRoute, 'snapshot.queryParams.selectedTab');
@@ -311,63 +302,20 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.resourceService.frmelmnts?.lbl?.mytrainings ||
                     '';
 
-                // Find the enrolled section by matching the derived name
                 const enrolledSection = sections.find(s => s.name === expectedSectionName);
-
-                // Set enrolled section if found
+               
                 if (enrolledSection) {
                     this.enrolledSection = enrolledSection;
                 } else {
-                    console.warn(`No enrolled section found for name: ${expectedSectionName}`);
                     this.enrolledSection = null;
                 }
 
-                console.log('Final enrolled section:', this.enrolledSection);
-
-
-            
-
-                
-                
-                // const sectionName = finalSection.name || this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
-                // const sectionName = finalSection.name;
-             
-
-                // if (this.pageSections?.length) {
-                //     const existingIndex = this.pageSections.findIndex(section => section.name === sectionName);
-                //     if (existingIndex !== -1) {
-                //         // Update existing section
-                //         this.pageSections[existingIndex] = finalSection;
-                //     } else {
-                //         // Add new section at the beginning
-                //         this.pageSections.unshift(finalSection);
-                //     }
-                // } else {
-                //     // First load
-                //     this.pageSections = [finalSection];
-                // }
-
-                // // Keep a reference to enrolled section with the correct name
-                // this.enrolledSection = finalSection;
-
-                // // Keep a reference to enrolled section
-                // this.enrolledSection = finalSection;
-
-                // console.log(' Final merged sections:', this.enrolledSection);
-                // this.enrolledSection = finalSection;
-                // this.pageSections = finalSection.contents.slice(0, 4);
-            })
-
-                        
-           
+            })           
         );
 
         this.subscription$ = merge(concat(this.fetchChannelData(), enrolledSection$), this.initLayout(), this.fetchContents())
             .pipe(
                 takeUntil(this.unsubscribe$),
-                tap((data)=>{
-                    console.log('Subscription Data:', data);
-                }),
                 catchError((err: any) => {
                     console.error(err);
                     return of({});
@@ -383,8 +331,6 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
     public fetchEnrolledCoursesSection() {
         return this.coursesService.enrolledCourseData$
             .pipe(
-                tap((response) => {
-                    console.log('Raw Enrolled Courses API Response:', response); }),
                 tap(({ enrolledCourses, err }) => {
                     this.enrolledCourses = this.enrolledSection = [];
                     this.completeCourses = this.completedCourseSection = [];                   
@@ -424,7 +370,6 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     let filteredCourses = _.filter(enrolledCourses || [], enrolledContentPredicate);
                     filteredCourses = _.orderBy(filteredCourses, [sortingField], [sortingOrder]);
                     this.enrolledCourses = filteredCourses
-                    console.log('Filtered Enrolled Courses:', this.enrolledCourses);
                     const { constantData, metaData, dynamicFields } = _.get(this.configService, 'appConfig.CoursePageSection.enrolledCourses');
                     
                 
@@ -475,8 +420,6 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.enrolledSection = enrolledSection;
                     this.completedCourseSection = completedCourseSection;
 
-                    console.log('Enrolled Section:', this.enrolledSection);
-                    console.log('Completed Course Section:', this.completedCourseSection);
                 }),
                 
             );
@@ -638,17 +581,13 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (this.userService.loggedIn) {
                             option.filters['visibility'] = option.filters['channel'] = [];
                         }
-             
-                      
-                        console.log('Current Page Data', currentPageData);
-                        console.log('params', params);
                        
                         return this.searchService.contentSearch(option)
                             .pipe( 
                                 map((response) => {
                                     const { subject: selectedSubjects = [] } = (this.selectedFilters || {}) as { subject: [] };
                                     this._facets$.next(request.facets ?
-                                        this.utilService.processCourseFacetData(_.get(response, 'result'), _.get(request, 'facets')) : {});
+                                    this.utilService.processCourseFacetData(_.get(response, 'result'), _.get(request, 'facets')) : {});
                                     this.searchResponse = get(response, 'result.content');
                                    
                                     if (_.has(response, 'result.QuestionSet')) {
@@ -766,12 +705,10 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                         return find(userProfileSubjects, subject => toLower(subject) === toLower(name));
                                     });
                                     this.apiContentList = [...userSubjects, ...notUserSubjects];
-                                    console.log('API content list', this.apiContentList);
                                     if (this.apiContentList !== undefined && !this.apiContentList.length) {
                                         return;
                                     }
                                     this.pageSections = this.apiContentList.slice(0, 4);
-                                    console.log('Page Sections', this.pageSections);
                                     this.addHoverData();
                                 }, err => {
                                     this.showLoader = false;
