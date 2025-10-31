@@ -266,10 +266,14 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         const metadata = metadataMap[courseId];
 
                         if (metadata) {
-                            content.board = _.get(metadata, 'se_boards', []);
-                            content.gradeLevel = _.get(metadata, 'se_gradeLevels', []);
-                            content.medium = _.get(metadata, 'se_mediums', []);
-                            content.subject = _.get(metadata, 'se_subjects', []);
+                            const filterCategories = this.cslFrameworkService.getGlobalFilterCategoriesObject();
+                            if (filterCategories) {
+                                filterCategories.forEach(category => {
+                                    if (category.type === 'framework') {
+                                        content[category.code] = _.get(metadata, category.alternativeCode, []);
+                                    }
+                                });
+                            }
                         }
 
                         return content;
