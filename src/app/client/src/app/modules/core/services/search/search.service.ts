@@ -278,7 +278,6 @@ export class SearchService {
     if (requestParam['pageNumber'] && requestParam['limit']) {
       option.data.request['offset'] = (requestParam.pageNumber - 1) * requestParam.limit;
     }
-    
     return this.publicDataService.post(option);
   }
   /* *

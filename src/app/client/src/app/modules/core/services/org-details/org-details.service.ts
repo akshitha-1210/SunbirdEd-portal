@@ -41,13 +41,12 @@ export class OrgDetailsService {
   }
 
   getOrgDetails(slug?: string): Observable<ServerResponse> {
-    let slugUpdate = 'sunbird';
     const option = {
       url: this.configService.urlConFig.URLS.ADMIN.ORG_SEARCH, // commonly used search request, cached at proxy
       data: {
         request: {
           filters: {
-            slug: slugUpdate || (<HTMLInputElement>document.getElementById('defaultTenant')).value,
+            slug: slug || (<HTMLInputElement>document.getElementById('defaultTenant')).value,
             isTenant: true
           }
         }

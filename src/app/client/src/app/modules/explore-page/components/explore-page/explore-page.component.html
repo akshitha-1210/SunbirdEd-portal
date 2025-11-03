@@ -37,12 +37,6 @@
           </div>
           <div class="twelve wide column relative9"
             *ngIf="enrolledSection?.contents?.length && isUserLoggedIn() && !_currentPageData?.sections">
-          
-              <!-- <div *ngFor="let sectionItem of enrolledSection.contents; let last = last" [ngClass]="{'last mb-0': last}">
-      
-               
-                <pre *ngIf="debugMode">{{ sectionItem | json }}</pre> -->
-
               <app-page-section [hideProgress]="true" (visits)="prepareVisits($event)" [section]="enrolledSection"
                 (playEvent)="playEnrolledContent($event, 'My courses')" (viewAll)="viewAll($event)"
                 [layoutConfiguration]="layoutConfiguration"></app-page-section>
