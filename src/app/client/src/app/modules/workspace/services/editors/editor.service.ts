@@ -74,7 +74,8 @@ export class EditorService {
             }
         };
         console.log('option', option);
-        return this.publicDataService.post(option);
+
+        return this.contentService.post(option);
     }
     /**
      * get content details by id and query param

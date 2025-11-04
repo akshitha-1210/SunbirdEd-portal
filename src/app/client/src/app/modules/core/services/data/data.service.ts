@@ -119,34 +119,12 @@ export class DataService {
   /**
    * for making post api calls
    * @param {RequestParam} requestParam interface
-  */
-  // post(requestParam: RequestParam): Observable<ServerResponse> {
-  //   const httpOptions: HttpOptions = {
-  //     headers: requestParam.header ? this.getHeader(requestParam.header) : this.getHeader(),
-  //     params: requestParam.param
-  //   };
-  //   return this.http.post(this.baseUrl + requestParam.url, requestParam.data, httpOptions).pipe(
-  //     mergeMap((data: ServerResponse) => {
-  //       if (data.responseCode !== 'OK') {
-  //         return observableThrowError(data);
-  //       }
-  //       return observableOf(data);
-  //     }));
-  // }
+   */
   post(requestParam: RequestParam): Observable<ServerResponse> {
-    let httpOptions: HttpOptions = {
+    const httpOptions: HttpOptions = {
       headers: requestParam.header ? this.getHeader(requestParam.header) : this.getHeader(),
       params: requestParam.param
     };
-    console.log('this.baseUrl', this.baseUrl);
-    console.log('requestParam', requestParam);
-    if(requestParam.url.includes('composite') || requestParam.url.includes('definition') || requestParam.url.includes('user')){
-      console.log('inside if');
-      httpOptions.headers = {...httpOptions.headers, "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGlfYWRtaW4ifQ.xKhN4Ufr5ow6weM7yX6DlNKON-HNk2nHdUyOwJSUpso", "x-authenticated-user-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImFjY2Vzc192MV9rZXkxIn0.eyJhdWQiOiJodHRwczovL2Rldi5zdW5iaXJkZWQub3JnL2F1dGgvcmVhbG1zL3N1bmJpcmQiLCJzdWIiOiJmOmNhc3NhbmRyYWZlZGVyYXRpb25pZDo2N2U5MjJlOS1mZTBiLTRjOGQtYThlMy1hYjNmYWIxNTcyMGEiLCJyb2xlcyI6W3sicm9sZSI6IkNPTlRFTlRfQ1JFQVRPUiIsInNjb3BlIjpbeyJvcmdhbmlzYXRpb25JZCI6IjAxNDQxMTY2MTkxNjM3Mjk5MjAifV19LHsicm9sZSI6IlBVQkxJQyIsInNjb3BlIjpbXX1dLCJpc3MiOiJodHRwczovL2Rldi5zdW5iaXJkZWQub3JnL2F1dGgvcmVhbG1zL3N1bmJpcmQiLCJuYW1lIjoiQ29udGVudCBDcmVhdG9yIiwidHlwIjoiQmVhcmVyIiwiZXhwIjoxNzYwNjk1NjUyLCJpYXQiOjE3NjA2MDkyOTR9.e8Q1YcLqyEboPAW5e2F0Bpna6dhbvVS_GmWFbYB3B420UTxg6eroLKvqoT4seLXZqb7XljiZY8ZF70ridF0JEQbyYg4zuRYQDA3CMjWMuRe6cul1qUeIHg9RvldMhLVIRUhCSfmghjHKvoKxzRkKUkc-HJEFYxL_tnrtrHYHJ4XyYpLrtGqV-i33rTXK1WO-gIOs0U-2ibco1GdhtwH1u13d8dTh7Mq8kRhaIXMENzILcw7dT8HnqBKxUmFsypTSKAPgBRJqSanu8XE9WVrtxZMLEYlXcIXRlgZYJsd7M3m9zDjyNK7um0hVG2hWNXBfP7DZjc8h5h_cAjbKihL2hQ"};
-    }
-
-    console.log('httpOptions', httpOptions);
-
     return this.http.post(this.baseUrl + requestParam.url, requestParam.data, httpOptions).pipe(
       mergeMap((data: ServerResponse) => {
         if (data.responseCode !== 'OK') {
@@ -155,6 +133,28 @@ export class DataService {
         return observableOf(data);
       }));
   }
+  // post(requestParam: RequestParam): Observable<ServerResponse> {
+  //   let httpOptions: HttpOptions = {
+  //     headers: requestParam.header ? this.getHeader(requestParam.header) : this.getHeader(),
+  //     params: requestParam.param
+  //   };
+  //   console.log('this.baseUrl', this.baseUrl);
+  //   console.log('requestParam', requestParam);
+  //   if(requestParam.url.includes('composite') || requestParam.url.includes('definition') || requestParam.url.includes('user')){
+  //     console.log('inside if');
+  //     httpOptions.headers = {...httpOptions.headers, "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGlfYWRtaW4ifQ.xKhN4Ufr5ow6weM7yX6DlNKON-HNk2nHdUyOwJSUpso", "x-authenticated-user-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImFjY2Vzc192MV9rZXkxIn0.eyJhdWQiOiJodHRwczovL2Rldi5zdW5iaXJkZWQub3JnL2F1dGgvcmVhbG1zL3N1bmJpcmQiLCJzdWIiOiJmOmNhc3NhbmRyYWZlZGVyYXRpb25pZDo2N2U5MjJlOS1mZTBiLTRjOGQtYThlMy1hYjNmYWIxNTcyMGEiLCJyb2xlcyI6W3sicm9sZSI6IkNPTlRFTlRfQ1JFQVRPUiIsInNjb3BlIjpbeyJvcmdhbmlzYXRpb25JZCI6IjAxNDQxMTY2MTkxNjM3Mjk5MjAifV19LHsicm9sZSI6IlBVQkxJQyIsInNjb3BlIjpbXX1dLCJpc3MiOiJodHRwczovL2Rldi5zdW5iaXJkZWQub3JnL2F1dGgvcmVhbG1zL3N1bmJpcmQiLCJuYW1lIjoiQ29udGVudCBDcmVhdG9yIiwidHlwIjoiQmVhcmVyIiwiZXhwIjoxNzYwNjk1NjUyLCJpYXQiOjE3NjA2MDkyOTR9.e8Q1YcLqyEboPAW5e2F0Bpna6dhbvVS_GmWFbYB3B420UTxg6eroLKvqoT4seLXZqb7XljiZY8ZF70ridF0JEQbyYg4zuRYQDA3CMjWMuRe6cul1qUeIHg9RvldMhLVIRUhCSfmghjHKvoKxzRkKUkc-HJEFYxL_tnrtrHYHJ4XyYpLrtGqV-i33rTXK1WO-gIOs0U-2ibco1GdhtwH1u13d8dTh7Mq8kRhaIXMENzILcw7dT8HnqBKxUmFsypTSKAPgBRJqSanu8XE9WVrtxZMLEYlXcIXRlgZYJsd7M3m9zDjyNK7um0hVG2hWNXBfP7DZjc8h5h_cAjbKihL2hQ"};
+  //   }
+
+  //   console.log('httpOptions', httpOptions);
+
+  //   return this.http.post(this.baseUrl + requestParam.url, requestParam.data, httpOptions).pipe(
+  //     mergeMap((data: ServerResponse) => {
+  //       if (data.responseCode !== 'OK') {
+  //         return observableThrowError(data);
+  //       }
+  //       return observableOf(data);
+  //     }));
+  // }
 
   /**
    * for making patch api calls
