@@ -335,6 +335,7 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
     const requestData = {
       content: this.generateData(_.pickBy(this.formData.formInputData))
     };
+    console.log('requestData', requestData);
     for (let i = 0; i < requiredFields.length; i++) {
       if (_.isUndefined(requestData.content[requiredFields[i]])) {
         this.toasterService.error(this.resourceService.messages.fmsg.m0101);

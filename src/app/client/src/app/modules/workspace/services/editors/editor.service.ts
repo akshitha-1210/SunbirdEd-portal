@@ -47,13 +47,23 @@ export class EditorService {
      */
     create(req): Observable<ServerResponse> {
       const frameworkCategories = this.cslFrameworkService.getFrameworkCategoriesObject() as Array<any>;
+      console.log('frameworkCategories', frameworkCategories);
       const categoryCodes = frameworkCategories.map((category) => category.code);
+      console.log('categoryCodes', categoryCodes);
       categoryCodes.forEach((code) => {
         const categoryValue = _.get(req, `content.${code}`);
+        console.log('categoryValue', categoryValue);
         if (categoryValue && !_.isArray(categoryValue)) {
-          const category = [];
-          category.push(categoryValue);
-          req.content[code] = category;
+          console.log('inside if');
+          if (code === 'board'){
+            req.content[code] = categoryValue.toString();
+            console.log('req.content[code]', req.content[code]);
+          } else {
+            const category = [];
+            category.push(categoryValue);
+            req.content[code] = category;
+            console.log('req.content[code]', req.content[code]);
+          }
         }
       });
 
@@ -63,7 +73,8 @@ export class EditorService {
                 'request': req
             }
         };
-        return this.contentService.post(option);
+        console.log('option', option);
+        return this.publicDataService.post(option);
     }
     /**
      * get content details by id and query param
