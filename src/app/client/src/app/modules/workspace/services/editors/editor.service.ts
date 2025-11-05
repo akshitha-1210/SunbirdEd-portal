@@ -46,6 +46,7 @@ export class EditorService {
      * @param req OBJECT
      */
     create(req): Observable<ServerResponse> {
+      console.log('req before modification', req);
       const frameworkCategories = this.cslFrameworkService.getFrameworkCategoriesObject() as Array<any>;
       console.log('frameworkCategories', frameworkCategories);
       const categoryCodes = frameworkCategories.map((category) => category.code);
@@ -53,18 +54,18 @@ export class EditorService {
       categoryCodes.forEach((code) => {
         const categoryValue = _.get(req, `content.${code}`);
         console.log('categoryValue', categoryValue);
-        if (categoryValue && !_.isArray(categoryValue)) {
-          console.log('inside if');
-          if (code === 'board'){
-            req.content[code] = categoryValue.toString();
-            console.log('req.content[code]', req.content[code]);
-          } else {
-            const category = [];
-            category.push(categoryValue);
-            req.content[code] = category;
-            console.log('req.content[code]', req.content[code]);
-          }
-        }
+        // if (categoryValue && !_.isArray(categoryValue)) {
+        //   console.log('inside if');
+        //   if (code === 'board'){
+        //     req.content[code] = categoryValue.toString();
+        //     console.log('req.content[code]', req.content[code]);
+        //   } else {
+        //     const category = [];
+            // category.push(categoryValue);
+        req.content[code] = categoryValue;
+        //     console.log('req.content[code]', req.content[code]);
+        //   }
+        // }
       });
 
         const option = {
