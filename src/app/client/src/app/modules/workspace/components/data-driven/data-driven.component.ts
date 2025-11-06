@@ -280,7 +280,8 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
   generateData(data) {
     this.showLoader = true;
     const requestData = _.cloneDeep(data);
-    console.log('data received from form', data);
+    console.log("Input data for generateData", data);
+    
     requestData.name = data.name ? data.name : this.name,
       requestData.description = data.description ? data.description : this.description,
       requestData.createdBy = this.userService.userProfile.id,
@@ -313,6 +314,7 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
     } else {
       requestData.creator = this.userService.userProfile.firstName;
     }
+
     console.log("Data types", this.formFieldProperties.map(field => field.dataType));
 
     if (this.targetFramework) {
@@ -327,16 +329,12 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
     } else {
       requestData.contentType = this.configService.appConfig.contentCreateTypeForEditors[this.contentType];
     }
-
-    console.log("Request data before modification", requestData);
-
+   
     this.formFieldProperties.forEach(field => {
     const code = field.code;
     const dataType = field.dataType;
     const categoryValue = requestData[code];
-
       if (_.isUndefined(categoryValue)) return;
-
       if (dataType === 'text' && !_.isArray(categoryValue)) {
         requestData[code] = categoryValue.toString(); 
       }
@@ -344,14 +342,14 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
         requestData[code] = [categoryValue];
       }
     });
+    console.log("Final request data", requestData);
     return requestData;
   }
 
   createContent(modal) {
     let requiredFields = [];
     requiredFields = _.map(_.filter(this.formFieldProperties, { 'required': true }), field => field.code );
-
-    console.log('this.formData.formInputData', this.formData.formInputData);
+    console.log('Data from form', this.formData.formInputData);
     console.log("Form field properties", this.formFieldProperties);
     const requestData = {
       content: this.generateData(_.pickBy(this.formData.formInputData))
@@ -373,15 +371,10 @@ export class DataDrivenComponent extends WorkSpace implements OnInit, OnDestroy,
         this.toasterService.error(this.resourceService.messages.fmsg.m0078);
       });
     } else {
-      console.log("Inside else")
       this.editorService.create(requestData).subscribe(res => {
         this.createLockAndNavigateToEditor({identifier: res.result.content_id});
-        console.log('res', res);
-        console.log("Next steps", this.createLockAndNavigateToEditor({identifier: res.result.content_id}) );
-
       }, err => {
         this.toasterService.error(this.resourceService.messages.fmsg.m0010);
-        console.log('err', err);
       });
     }
   }
