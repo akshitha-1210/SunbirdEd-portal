@@ -102,6 +102,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
     refreshFilter: boolean = true;
     public categoryKeys;
     frameworkCategoriesList;
+
     get slideConfig() {
         return cloneDeep(this.configService.appConfig.LibraryCourses.slideConfig);
     }
@@ -249,34 +250,39 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.setFilterConfig(currentPage);
             }),
             switchMap(this.fetchEnrolledCoursesSection.bind(this)),
-    
-            switchMap((enrolledSection:any) =>
-               
-                    this.fetchContents().pipe(
-                    map((pageContentData: any[]) => {
-                        
-                        const allContents = _.flatMap(pageContentData, section => section.contents || []);
+            switchMap((enrolledSection:any) => {
+                const pageContentData = this.searchResponse || [];
+                console.log("pageContentData", pageContentData);
+                return of(enrolledSection).pipe(
+                    map((section: any[]) => {
+                        const allContents = pageContentData;
+                        console.log("allContents", allContents);
                         const metadataMap = _.keyBy(allContents, 'identifier');
+                        console.log("metadataMap", metadataMap);
+                        console.log("Content before enrichment", enrolledSection);
+                        console.log("Enrolled contents", enrolledSection.contents);
                         
-                        const enrichedContents = (this.enrolledSection.contents || []).map(content => {
-                        const courseId = _.get(content, 'metaData.courseId') ||
-                                        _.get(content, 'identifier') ||
-                                        _.get(content, 'metaData.identifier');
-                        const metadata = metadataMap[courseId];
+                        const enrichedContents = (enrolledSection || []).map(content => {
+                            const courseId = _.get(content, 'metaData.courseId') ||
+                                            _.get(content, 'identifier') ||
+                                            _.get(content, 'metaData.identifier');
+                            const metadata = metadataMap[courseId];
 
-                        if (metadata) {
-                            const filterCategories = this.cslFrameworkService.getGlobalFilterCategoriesObject();
-                            if (filterCategories) {
-                                filterCategories.forEach(category => {
-                                    if (category.type === 'framework') {
-                                        content[category.code] = _.get(metadata, category.alternativeCode, []);
-                                    }
-                                });
+                            if (metadata) {
+                                const filterCategories = this.cslFrameworkService.getGlobalFilterCategoriesObject();
+                                if (filterCategories) {
+                                    filterCategories.forEach(category => {
+                                        if (category.type === 'framework') {
+                                            content[category.code] = _.get(metadata, category.alternativeCode, []);
+                                        }
+                                    });
+                                }
                             }
-                        }
+                      
 
-                        return content;
+                            return content;
                         });
+                        console.log("content", enrichedContents);
 
                         const sectionData = {
                             ...enrolledSection,
@@ -287,13 +293,11 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (!sectionData.name) {
                             sectionData.name = this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
                         }
+                        console.log("sectionData", sectionData);
                         return sectionData;
-                    
-                    
                 }),
-            )
-        ),
-         
+            );
+          }),
             tap((finalSection) => {
                 if (!finalSection) return;            
                 const sections = Array.isArray(finalSection) ? finalSection : [finalSection];
@@ -306,6 +310,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     '';
 
                 const enrolledSection = sections.find(s => s.name === expectedSectionName);
+                console.log("enrolledSection", enrolledSection);
                
                 if (enrolledSection) {
                     this.enrolledSection = enrolledSection;
@@ -395,8 +400,6 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         return formatedContent;
                     }));
                
-                   
-                    
                     this.allEnrolledCourses = filteredCourses;
                  
                     completedCourseSection.contents = _.compact(_.map(filteredCourses, content => {
@@ -572,7 +575,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         const option = this.searchService.getSearchRequest(request, get(filters, 'primaryCategory'));
                         const params = _.get(this.activatedRoute, 'snapshot.queryParams');
                         _.filter(Object.keys(params),filterValue => { 
-                            if (((_.get(currentPageData, 'metaData.filters').indexOf(filterValue) !== -1))) {
+                            if (((_.get(currentPageData, 'metaData.filters',[]).indexOf(filterValue) !== -1))) {
                                 let param = {};
                                 param[filterValue] = (typeof (params[filterValue]) === "string") ? params[filterValue].split(',') : params[filterValue];
                                 if (param[filterValue].length === 1 && param[filterValue][0] === 'CBSE/NCERT') {
@@ -584,18 +587,19 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (this.userService.loggedIn) {
                             option.filters['visibility'] = option.filters['channel'] = [];
                         }
+                        console.log('Search Request', option);
                        
                         return this.searchService.contentSearch(option)
                             .pipe( 
                                 map((response) => {
+                                    console.log('Search Response', response);
                                     const { subject: selectedSubjects = [] } = (this.selectedFilters || {}) as { subject: [] };
                                     this._facets$.next(request.facets ?
                                     this.utilService.processCourseFacetData(_.get(response, 'result'), _.get(request, 'facets')) : {});
                                     this.searchResponse = get(response, 'result.content');
                                    
                                     if (_.has(response, 'result.QuestionSet')) {
-                                        this.searchResponse = _.merge(this.searchResponse, _.get(response, 'result.QuestionSet'));
-                                        
+                                        this.searchResponse = _.merge(this.searchResponse, _.get(response, 'result.QuestionSet'));   
                                     }
                                     const globalFilterCategoriesObject = this.cslFrameworkService.getGlobalFilterCategoriesObject();
                                     const lastCategory = this.frameworkCategoriesList[this.frameworkCategoriesList.length - 1];
@@ -688,6 +692,8 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                             const searchSections = currentPageData.sections.filter(sec => sec.facetKey === 'search');
                                             searchSections.forEach((item) => {
                                                 this.contentSections.push(this.getContentSection(item, option));
+
+
                                             });
 
                                         }

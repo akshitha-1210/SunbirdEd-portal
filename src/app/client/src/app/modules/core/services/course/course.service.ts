@@ -75,6 +75,7 @@ export class CoursesService {
     return this.learnerService.get(option).pipe(
       map((apiResponse: ServerResponse) => {
         this.enrolledCourses = apiResponse.result.courses;
+        console.log("enrolledCourses", this.enrolledCourses);
         this._enrolledCourseData$.next({ err: null, enrolledCourses: this.enrolledCourses });
         return apiResponse;
       }),
