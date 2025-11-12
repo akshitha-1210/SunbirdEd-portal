@@ -248,24 +248,25 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
                
                 this.setFilterConfig(currentPage);
+                
             }),
             switchMap(this.fetchEnrolledCoursesSection.bind(this)),
             switchMap((enrolledSection:any) => {
-                const pageContentData = this.searchResponse || [];
-                console.log("pageContentData", pageContentData);
-                return of(enrolledSection).pipe(
+                
+                return of (enrolledSection).pipe(
                     map((section: any[]) => {
-                        const allContents = pageContentData;
-                        console.log("allContents", allContents);
+                        const allContents = this.searchResponse;
                         const metadataMap = _.keyBy(allContents, 'identifier');
-                        console.log("metadataMap", metadataMap);
-                        console.log("Content before enrichment", enrolledSection);
-                        console.log("Enrolled contents", enrolledSection.contents);
+                        const enrichedContents: any[] = [];
+                        const sectionArray = Array.isArray(this.enrolledSection.contents)
+                        ? this.enrolledSection.contents
+                        : [];
                         
-                        const enrichedContents = (enrolledSection || []).map(content => {
-                            const courseId = _.get(content, 'metaData.courseId') ||
-                                            _.get(content, 'identifier') ||
-                                            _.get(content, 'metaData.identifier');
+                        for (const content of sectionArray) {
+                            const courseId =
+                                _.get(content, 'metaData.courseId') ||
+                                _.get(content, 'contentId') ||
+                                _.get(content, 'identifier');
                             const metadata = metadataMap[courseId];
 
                             if (metadata) {
@@ -278,11 +279,8 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                                     });
                                 }
                             }
-                      
-
-                            return content;
-                        });
-                        console.log("content", enrichedContents);
+                        enrichedContents.push(content);
+                        };
 
                         const sectionData = {
                             ...enrolledSection,
@@ -293,7 +291,6 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (!sectionData.name) {
                             sectionData.name = this.getSectionName(get(this.activatedRoute, 'snapshot.queryParams.selectedTab'));
                         }
-                        console.log("sectionData", sectionData);
                         return sectionData;
                 }),
             );
@@ -310,7 +307,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                     '';
 
                 const enrolledSection = sections.find(s => s.name === expectedSectionName);
-                console.log("enrolledSection", enrolledSection);
+                
                
                 if (enrolledSection) {
                     this.enrolledSection = enrolledSection;
@@ -506,6 +503,7 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
             this.setDesktopFilters(false);
         }
         this.fetchContents$.next(currentPageData);
+        
     }
 
     setDesktopFilters(isDefaultFilters) {
@@ -587,17 +585,15 @@ export class ExplorePageComponent implements OnInit, OnDestroy, AfterViewInit {
                         if (this.userService.loggedIn) {
                             option.filters['visibility'] = option.filters['channel'] = [];
                         }
-                        console.log('Search Request', option);
-                       
+                        
                         return this.searchService.contentSearch(option)
                             .pipe( 
                                 map((response) => {
-                                    console.log('Search Response', response);
                                     const { subject: selectedSubjects = [] } = (this.selectedFilters || {}) as { subject: [] };
                                     this._facets$.next(request.facets ?
                                     this.utilService.processCourseFacetData(_.get(response, 'result'), _.get(request, 'facets')) : {});
                                     this.searchResponse = get(response, 'result.content');
-                                   
+                                    
                                     if (_.has(response, 'result.QuestionSet')) {
                                         this.searchResponse = _.merge(this.searchResponse, _.get(response, 'result.QuestionSet'));   
                                     }
